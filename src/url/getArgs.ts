@@ -38,24 +38,42 @@ export default function getArgs<T extends Record<string, any>>(
             args[key] = validate(value);
         } else {
             switch (parser.kind) {
-                case 'boolean':
+                case 'boolean': {
                     args[key] = validate(JSON.parse(value));
                     break;
+                }
 
-                case 'number':
+                case 'number': {
                     args[key] = validate(Number(value));
                     break;
+                }
 
-                case 'JSON':
-                    args[key] = validate(
-                        JSON.parse(parser.source === 'hash' ? decodeURIComponent(value) : value)
-                    );
+                case 'JSON': {
+                    if (parser.source === 'hash') {
+                        args[key] = validate(decodeURIComponent(value));
+                    }
+                    if (parser.source === 'query') {
+                        try {
+                            const parsedValue = JSON.parse(value);
+                            args[key] = validate(parsedValue);
+                        } catch (e) {
+                            if (!(e instanceof Error)) throw e; // type narrowing
+                            if (e.name === 'SyntaxError') {
+                                const decodedValue = decodeURIComponent(value);
+                                const parsedValue = JSON.parse(decodedValue);
+                                args[key] = validate(parsedValue);
+                            }
+                        }
+                    }
+
                     break;
+                }
 
                 case 'string':
-                case 'transparent':
+                case 'transparent': {
                     args[key] = validate(value);
                     break;
+                }
             }
         }
     }

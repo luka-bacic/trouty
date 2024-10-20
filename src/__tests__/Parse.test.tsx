@@ -198,6 +198,25 @@ describe('json', () => {
         expect(hash).toBeUndefined();
         expect(args).toEqual({query: ['foo'], hash: ['foo']});
     });
+
+    it('can decode and parse if the value is encoded', () => {
+        const encoded = encodeURI(JSON.stringify(['foo']));
+        const notEncoded = '["bar"]';
+        renderRoute<{encoded: string[]; notEncoded: string[]}>({
+            routeConfig: {
+                path: '/JSON',
+                parse: {
+                    encoded: Parse.query.JSON((x) => (Array.isArray(x) ? x : ['not an array'])),
+                    notEncoded: Parse.query.JSON((x) => (Array.isArray(x) ? x : ['not an array 2']))
+                }
+            },
+            initialPath: `/JSON?encoded=${encoded}&notEncoded=${notEncoded}`
+        });
+
+        expect(screen.getByTitle('value').textContent).toBe(
+            JSON.stringify({encoded: ['foo'], notEncoded: ['bar']})
+        );
+    });
 });
 
 describe('state', () => {
